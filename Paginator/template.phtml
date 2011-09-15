@@ -1,0 +1,23 @@
+{*
+ * @version    $Id: template.phtml 
+ *}
+
+<div class="paginator">
+    {if $pageCount > 1}
+
+	<a href="{link changePage!, 'page' => $firstPage}" class="ajax" title="{_'First page'}"><span class="datagrid-icon datagrid-icon-firstPage"></span></a>
+
+        <a n:if="$previousPage != null" href="{link changePage! page => $previousPage}" class="ajax" title="{_'Previous page'}"><span class="datagrid-icon datagrid-icon-previousPage"> </span></a>
+
+        <span class="page">{$page} {_'of'} {$pageCount}</span>
+
+        <a n:if="$nextPage != null" href="{link changePage! page => $nextPage}" class="ajax" title="{_'Next page'}"><span class="datagrid-icon datagrid-icon-nextPage"></span></a>
+
+        <a href="{link changePage!, page => $lastPage}" class="ajax" title="{_'Last page'}"><span class="datagrid-icon datagrid-icon-lastPage"></span></a>
+
+    {/if}
+    <span class="records_info">
+        {_'Showing'}: {$from}-{$to} {_'of'} {$totalCount} {control form begin}{$control['form']['items_per_page']->label}{$control['form']['items_per_page']->control}{$control['form']['btnSave']->control}{control form end}
+    </span>
+</div>
+

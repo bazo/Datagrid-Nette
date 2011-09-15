@@ -1,0 +1,167 @@
+{**
+ * @version template.phtml 18.7.2010
+ * @author Martin Bažík
+ *}
+ <div class="datagrid {$gridClass}">
+     {snippet flashes}
+     {foreach $flashes as $flash}<div class="flash flash-{$flash->type}"><span class="icon icon-{$flash->type}"></span>{!_$flash->message}</div>{/foreach}
+     {/snippet}
+ {control form begin}
+ {control form errors}
+ <div class="header">
+     {if $operationsEnabled}
+     <span class="operations_label">{$control['form']['operation']->label}</span>{$control['form']['operation']->control}{$control['form']['btnExecuteOperation']->control}
+     {/if}
+     {foreach $customHtml as $html }
+     {$html}
+     {/foreach}
+ </div>
+{snippet table}
+
+ <table>
+     <thead>
+     <tr class="header">
+         {if $operationsEnabled}
+            <th class="select_filters" style="width: 10px;">
+                <a href="" class="all"><span class="datagrid-icon datagrid-icon-selectall" title="{_'Select all'}"></span></a>
+                <a href="" class="none"><span class="datagrid-icon datagrid-icon-selectnone" title="{_'Select none'}"></span></a>
+            </th>
+         {/if}
+         {foreach $columnNames as $columnName}
+            <th class="{$columns[$columnName]['type']} {$columnName}">
+                {var $newDirection = 'descending'}
+                {var $index = $iterator->getCounter()-1}
+                {if isset($ordering[$index]) }
+                    {if $ordering[$index][$columnName] == 'DESC'}
+                        {var $newDirection = 'ascending'}
+                    {elseif $ordering[$index][$columnName] == 'ASC'}
+                        {var $newDirection = 'cancel'}
+                    {/if}
+                {/if}
+                <a href="{link orderByColumn!, 'column' => $columnName}" class="ajax" {if $newDirection != 'cancel'}title="{_sprintf('Order by %s %s',$columnName, $newDirection)}"{else}title="{_sprintf('Cancel ordering by %s', $columnName)}"{/if}>
+                {$control[$columnName]->renderHeader()}
+                </a>
+                {if $newDirection == 'cancel'}<span class="datagrid-icon datagrid-icon-up" title="{_'Current direction ascending'}"></span>{/if}
+                {if $newDirection == 'ascending'}<span class="datagrid-icon datagrid-icon-down" title="{_'Current direction descending'}"></span>{/if}
+                <br>
+                {if $enableConfig}
+                {if !$iterator->isFirst()}
+                <a href="{link moveColumn!, 'column' => $columnName, 'direction' => DibiDatagrid::MOVE_COLUMN_LEFT}" class="ajax"><span class="datagrid-icon datagrid-icon-left cancel-column" title="{_'Move left'}"></span></a>
+                {/if}
+                {if !$iterator->isLast()}
+                <a href="{link moveColumn!, 'column' => $columnName, 'direction' => DibiDatagrid::MOVE_COLUMN_RIGHT}" class="ajax"><span class="datagrid-icon datagrid-icon-right cancel-column" title="{_'Move right'}"></span></a>
+                {/if}
+                <a href="{link removeColumn!, 'column' => $columnName}" class="ajax"><span class="datagrid-icon datagrid-icon-cross cancel-column" title="{_'Remove column'}"></span></a>
+                {/if}
+            </th>
+         {/foreach}
+         {foreach $actionColumns as $actionColumnName}
+            <th>{$actionColumnName}</th>
+         {/foreach}
+     </tr>
+
+     {*FILTERS*}
+     {if $control->hasFilters}
+     <tr class="filters">
+         {if $operationsEnabled}<td class="filter-control-buttons">{$control['form']['btnApplyFilters']->control}{$control['form']['btnCancelFilters']->control}</td>{/if}
+         {foreach $columnNames as $columnName}
+            <td class="filter {$columns[$columnName]['type']} {$columnName}">
+                {if $control[$columnName]->hasFilter()}
+                <div>{$control['form']['filters'][$columnName]->control}
+                    <span class="datagrid-icon datagrid-icon-cross cancel-filter" title="{_'Cancel filter'}" data-parent="{$control['form']['filters'][$columnName]->getHtmlId()}">
+                    </span>
+                </div>
+                {/if}
+            </td>
+         {/foreach}
+         {if $control->hasActions()}
+         <td class="filter-control-buttons">
+             <div class="buttons">{$control['form']['btnApplyFilters']->control}{$control['form']['btnCancelFilters']->control}</div>
+         </td>
+         {/if}
+	 {if $control->hasActions() == false and $operationsEnabled == false}
+     <span style="display: none !important;">{$control['form']['btnApplyFilters']->control}</span>
+	 {/if}
+     </tr>
+     {/if}
+     </thead>
+     {*RECORDS*}
+     {foreach $records as $key => $record}
+     <tr class="{if $iterator->isOdd()}odd{else}even{/if} row">
+        {if $operationsEnabled}
+            <td style="text-align: center;" class="row_checkbox">{$control['form']['boxes']['row_'.$key]->control}</td>
+        {/if}
+        {foreach $columnNames as $columnName}
+            {var $column = $control[$columnName]}
+                 {$column->setRecord(@$record->$columnName, $record)->setType($columns[$columnName]['type'])->render()}
+        {/foreach}
+        
+        {foreach $actionColumns as $actionColumnName}
+            {var $actionColumn = $control[$actionColumnName]}
+            <td>
+                {foreach $actionColumn->getActions() as $action}
+                {var $key = $action->key}
+                    {$action->setRecord(@$record->$key, $record)->render()}
+                {/foreach}
+            </td>
+         {/foreach}
+     </tr>
+     {/foreach}
+     
+     
+     {if isset($sumCoulmnsNames) && count($records) != 0}
+        {var $sumArray = array()}
+        {foreach $records as $key => $record} 
+          {foreach $columnNames as $columnName}
+             {if !in_array($columnName, $sumCoulmnsNames)} 
+               {var $sumArray[$columnName] = ""}
+              {else}
+               {if !isset($sumArray[$columnName])}
+                 {var $sumArray[$columnName] = 0}
+               {/if}
+                {var $column = $control[$columnName]}
+                {var $sumArray[$columnName] += $record[$columnName]} 
+             {/if}
+          {/foreach} 
+        {/foreach}      
+      <tr class="cell" >      
+       {if $operationsEnabled}
+         <td></td>
+       {/if}  
+       {foreach $sumArray as $item}
+        {if $item == "" && $item != "0"}
+          <td></td>
+        {else}  
+          <td>Sum: {$item}</td>
+        {/if}
+       {/foreach}     
+       {if $control->hasActions()}
+         <td></td>
+       {/if}  
+      </tr>
+     {/if}
+     
+     
+ </table>
+{/snippet}
+
+{control form end}
+
+<div class="footer">
+    {snippet paginator}
+    {control paginator}
+    {/snippet}
+    <span class="footer_items">
+        <div class="settings">
+    {if $enableConfig == true}<a href="{*link showConfig!*}" class="ajax show_config"><span class="datagrid-icon datagrid-icon-settings" title="{_'Configuration'}"></span>{_'Settings'}</a>{/if}
+        </div>
+    <div class="reset"><a href="{link reset!}" class="ajax" title="{_'Reset'}"><span class="datagrid-icon datagrid-icon-reset"></span>{_'Reset'}</a></div>
+    </span>
+</div>
+
+ </div>
+{snippet configurator}
+<div class="datagrid-configurator">
+    {if $enableConfig == true}{control config}{/if}
+</div>
+{/snippet}
